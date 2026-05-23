@@ -1,0 +1,34 @@
+# reference: kept locally only
+reference-code/
+
+# build
+build/
+dist/
+*.egg-info/
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# virtualenvs
+.venv/
+venv/
+env/
+
+# editor / OS
+.vscode/
+.idea/
+.DS_Store
+
+# runtime outputs
+outputs/
+logs/
+*.log
+manifest.json
+
+# test artifacts
+.coverage
+htmlcov/
+verify-pdf-files/

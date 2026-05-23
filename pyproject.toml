@@ -1,0 +1,113 @@
+[build-system]
+requires = ["hatchling>=1.21"]
+build-backend = "hatchling.build"
+
+[project]
+name = "pdf-converter"
+version = "0.1.0"
+description = "Faithful PDF-to-Markdown conversion with hybrid heuristic + ML pipeline"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "Haoyu Hu", email = "hh824@cornell.edu" }]
+keywords = ["pdf", "markdown", "rag", "document-ai", "ocr", "ml"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Text Processing :: Markup :: Markdown",
+]
+
+dependencies = [
+    "PyMuPDF>=1.24",
+    "pdfplumber>=0.11",
+    "pikepdf>=9.0",
+    "pypdfium2>=4.30",
+    "pydantic>=2.7",
+    "pydantic-settings>=2.3",
+    "typer>=0.12",
+    "rich>=13.7",
+    "mdformat>=0.7",
+    "mdformat-gfm>=0.3",
+    "Pygments>=2.18",
+    "numpy>=1.26",
+    "Pillow>=10.0",
+]
+
+[project.optional-dependencies]
+ml = [
+    "surya-ocr>=0.6",
+    "torch>=2.2",
+    "pylatexenc>=2.10",
+]
+dev = [
+    "pytest>=8.0",
+    "pytest-xdist>=3.5",
+    "hypothesis>=6.100",
+    "ruff>=0.5",
+    "mypy>=1.10",
+]
+all = ["pdf-converter[ml,dev]"]
+
+[project.scripts]
+pdf-convert = "pdf_converter.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/Haoyu-Hu/pdf-converter"
+Issues = "https://github.com/Haoyu-Hu/pdf-converter/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/pdf_converter"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src/pdf_converter", "tests", "README.md", "LICENSE"]
+
+# ---- pdf-converter runtime config (overridable via env or CLI) -----------
+[tool.pdf_converter]
+output_dir = "outputs"
+image_subdir = "images"
+page_delimiter = ""              # empty by default; reference used a sentinel
+workers = 0                      # 0 = auto (cpu_count // 2 for heuristic, 1 for ML)
+ml = "auto"                      # auto | on | off
+resume = true
+domain = "auto"                  # auto | academic | technical | medical | report
+log_level = "INFO"
+
+# Heuristic tuning knobs (relative, not absolute)
+[tool.pdf_converter.heuristic]
+heading_zscore_threshold = 1.0   # how many std devs above body font to count as heading
+header_band_ratio = 0.07         # top 7% of page height
+footer_band_ratio = 0.07         # bottom 7% of page height
+chrome_freq_threshold = 0.30     # text recurring on >= 30% of pages is chrome
+column_max = 3
+math_op_density = 0.10           # >= 10% math-glyphs in span triggers equation candidate
+
+# ---- ruff ----------------------------------------------------------------
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "RUF", "SIM"]
+ignore = ["E501"]
+
+# ---- mypy ----------------------------------------------------------------
+[tool.mypy]
+python_version = "3.11"
+strict = true
+ignore_missing_imports = true
+warn_unused_ignores = true
+disallow_untyped_decorators = false
+
+# ---- pytest --------------------------------------------------------------
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
+markers = [
+    "ml: tests that require ML dependencies (surya-ocr, torch)",
+    "slow: tests that take more than a few seconds",
+]
